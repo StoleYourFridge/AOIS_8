@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+//#include "../AOIS_7/AOIS_7.h"
 #include <vector>
 #include <map>
 
@@ -62,9 +63,11 @@ public:
     void shiftDown();
     string print();
     Word operator*(Word& term);
-    Word operator=(Word& term);
+    Word operator=(Word term);
     bool operator==(Word& term);
     Word operator!();
+    bool operator<(Word& term);
+    bool operator>(Word& term);
 };
 Word::Word() {}
 Word::Word(int size) : word_size(size)
@@ -124,7 +127,7 @@ Word Word::operator!()
     Word result(output);
     return result;
 }
-Word Word::operator=(Word& term)
+Word Word::operator=(Word term)
 {
     data = term.data;
     word_size = term.word_size;
@@ -135,12 +138,24 @@ bool Word::operator==(Word& term)
     if (data == term.data && word_size == term.word_size) return true;
     return false;
 }
+bool Word::operator<(Word& term)
+{
+    pair<bool, bool> example = recursion_compare(data, term.data, data.size() - 1);
+    if (example.first && !example.second) return true;
+    else return false;
+}
+bool Word::operator>(Word& term)
+{
+    pair<bool, bool> example = recursion_compare(data, term.data, data.size() - 1);
+    if (!example.first && example.second) return true;
+    else return false;
+}
+
 
 class AsociatedMemory
 {
     vector<Word>table;
-    AsociatedMemory() {};
-    AsociatedMemory(AsociatedMemory& example) {};
+    AsociatedMemory();
     void push(int position, vector<bool> term);
     void print();
     void print_diagonalized();
@@ -148,7 +163,8 @@ class AsociatedMemory
     void F14(int position_one, int position_two);
     void F3(int position_one, int position_two);
     void F12(int position_one, int position_two);
-
+    void near_above(vector<bool> term);
+    void near_below(vector<bool> term);
 
 };
 AsociatedMemory::AsociatedMemory()
@@ -216,6 +232,44 @@ void AsociatedMemory::F14(int position_one, int position_two)
     if (position_two < 0 || position_two > amount_of_words_and_symbols - 1) return;
     Word example = !(table[position_one] * table[position_two]);
     cout << "F14(word[" << position_one << "], word[" << position_two << "]) = " << example.print() << endl;
+}
+void AsociatedMemory::near_above(vector<bool> term)
+{
+    vector<bool>near_current_vector(term.size(), true);
+    Word example(term), near_current(near_current_vector);
+    bool overlap = false;
+    for (int i = 0; i < table.size(); i++)
+    {
+        if ((table[i] < near_current || table[i] == near_current) && (table[i] > example || table[i] == example)) {
+            near_current = table[i];
+            overlap = true;
+        }
+    }
+    if (!overlap) {
+        cout << "Nothing found compare with this above!" << endl;
+    }
+    else {
+        cout << "Nearest word above found : " << near_current.print() << endl;
+    }
+}
+void AsociatedMemory::near_below(vector<bool> term)
+{
+    vector<bool>near_current_vector(term.size(), true);
+    Word example(term), near_current(near_current_vector);
+    bool overlap = false;
+    for (int i = 0; i < table.size(); i++)
+    {
+        if ((table[i] > near_current || table[i] == near_current) && (table[i] < example || table[i] == example)) {
+            near_current = table[i];
+            overlap = true;
+        }
+    }
+    if (!overlap) {
+        cout << "Nothing found compare with this below!" << endl;
+    }
+    else {
+        cout << "Nearest word below found : " << near_current.print() << endl;
+    }
 }
 
 int main()
