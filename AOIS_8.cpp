@@ -5,6 +5,7 @@
 using namespace std;
 
 const int amount_of_words_and_symbols = 16;
+const int recursion_border_index = -1;
 
 vector<bool> multiplication(vector<bool> term_one, vector<bool> term_two)
 {
@@ -27,6 +28,27 @@ vector<bool> multiplication(vector<bool> term_one, vector<bool> term_two)
     }
     return result;
 }
+bool summary(bool first, bool second)
+{
+    if (first && second) return true;
+    else return (first + second);
+}
+pair<bool, bool> recursion_compare(vector<bool>& term_one, const vector<bool>& term_two, int position)
+{
+    pair<bool, bool> result;
+    if (position == recursion_border_index) {
+        result.first = false;
+        result.second = false;
+        return result;
+    }
+    else {
+        pair<bool, bool> previous_result = recursion_compare(term_one, term_two, position - 1);
+        result.first = summary(previous_result.first, !term_one[position] * term_two[position] * !previous_result.second);
+        result.second = summary(previous_result.second, term_one[position] * !term_two[position] * !previous_result.first);
+        return result;
+    }
+}
+
 
 class Word
 {
@@ -122,8 +144,10 @@ class AsociatedMemory
     void push(int position, vector<bool> term);
     void print();
     void print_diagonalized();
-
-
+    void F1(int position_one, int position_two);
+    void F14(int position_one, int position_two);
+    void F3(int position_one, int position_two);
+    void F12(int position_one, int position_two);
 
 
 };
@@ -165,6 +189,33 @@ void AsociatedMemory::print_diagonalized()
         cout << "word[" << i << "] = " << example[i].print() << endl;
     }
     cout << "-------------------------------------" << endl;
+}
+void AsociatedMemory::F1(int position_one, int position_two)
+{
+    if (position_one < 0 || position_one > amount_of_words_and_symbols - 1) return;
+    if (position_two < 0 || position_two > amount_of_words_and_symbols - 1) return;
+    Word example = table[position_one] * table[position_two];
+    cout << "F1(word[" << position_one << "], word[" << position_two << "]) = " << example.print() << endl;
+}
+void AsociatedMemory::F3(int position_one, int position_two)
+{
+    if (position_one < 0 || position_one > amount_of_words_and_symbols - 1) return;
+    if (position_two < 0 || position_two > amount_of_words_and_symbols - 1) return;
+    cout << "F3(word[" << position_one << "], word[" << position_two << "]) = " << table[position_one].print() << endl;
+}
+void AsociatedMemory::F12(int position_one, int position_two)
+{
+    if (position_one < 0 || position_one > amount_of_words_and_symbols - 1) return;
+    if (position_two < 0 || position_two > amount_of_words_and_symbols - 1) return;
+    Word example = !table[position_one];
+    cout << "F12(word[" << position_one << "], word[" << position_two << "]) = " << example.print() << endl;
+}
+void AsociatedMemory::F14(int position_one, int position_two)
+{
+    if (position_one < 0 || position_one > amount_of_words_and_symbols - 1) return;
+    if (position_two < 0 || position_two > amount_of_words_and_symbols - 1) return;
+    Word example = !(table[position_one] * table[position_two]);
+    cout << "F14(word[" << position_one << "], word[" << position_two << "]) = " << example.print() << endl;
 }
 
 int main()
