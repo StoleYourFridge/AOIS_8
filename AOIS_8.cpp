@@ -1,12 +1,4 @@
-﻿#include <iostream>
-//#include "../AOIS_7/AOIS_7.h"
-#include <vector>
-#include <map>
-
-using namespace std;
-
-const int amount_of_words_and_symbols = 16;
-const int recursion_border_index = -1;
+﻿#include "AOIS_8.h"
 
 vector<bool> multiplication(vector<bool> term_one, vector<bool> term_two)
 {
@@ -49,26 +41,22 @@ pair<bool, bool> recursion_compare(vector<bool>& term_one, const vector<bool>& t
         return result;
     }
 }
-
-
-class Word
+bool fromStringToVector(string& input, vector<bool>& output)
 {
-    int word_size;
-    vector<bool> data;
-public:
-    Word();
-    Word(int size);
-    Word(vector<bool>& data);
-    void shiftUp();
-    void shiftDown();
-    string print();
-    Word operator*(Word& term);
-    Word operator=(Word term);
-    bool operator==(Word& term);
-    Word operator!();
-    bool operator<(Word& term);
-    bool operator>(Word& term);
-};
+    output.clear();
+    if (input.size() != amount_of_words_and_symbols) return false;
+    for (int i = 0; i < amount_of_words_and_symbols; i++)
+    {
+        if (input[i] == '1') output.push_back(true);
+        else if (input[i] == '0') output.push_back(false);
+        else {
+            output.clear();
+            return false;
+        }
+    }
+    return true;
+}
+
 Word::Word() {}
 Word::Word(int size) : word_size(size)
 {
@@ -83,6 +71,7 @@ Word::Word(int size) : word_size(size)
             data.push_back(false);
         }
     }
+    Sleep(1000);
 }
 Word::Word(vector<bool>& data) : word_size(data.size())
 {
@@ -107,7 +96,8 @@ string Word::print()
     string result; 
     for (int i = 0; i < word_size; i++)
     {
-        result += data[i];
+        if (data[i]) result.push_back('1');
+        else result.push_back('0');
     }
     return result;
 }
@@ -135,7 +125,7 @@ Word Word::operator=(Word term)
 }
 bool Word::operator==(Word& term)
 {
-    if (data == term.data && word_size == term.word_size) return true;
+    if (data == term.data) return true;
     return false;
 }
 bool Word::operator<(Word& term)
@@ -150,23 +140,66 @@ bool Word::operator>(Word& term)
     if (!example.first && example.second) return true;
     else return false;
 }
-
-
-class AsociatedMemory
+vector<bool> Word::GetV()
 {
-    vector<Word>table;
-    AsociatedMemory();
-    void push(int position, vector<bool> term);
-    void print();
-    void print_diagonalized();
-    void F1(int position_one, int position_two);
-    void F14(int position_one, int position_two);
-    void F3(int position_one, int position_two);
-    void F12(int position_one, int position_two);
-    void near_above(vector<bool> term);
-    void near_below(vector<bool> term);
+    vector<bool> result;
+    int V_border = 3;
+    for (int i = 0; i < V_border; i++)
+    {
+        result.push_back(data[i]);
+    }
+    return result;
+}
+void Word::SetS()
+{
+    vector<bool> insertion = A_B_summary(*this);
+    int s_border = 11;
+    for (int i = s_border; i < data.size(); i++)
+    {
+        data.erase(data.begin() + i);
+        data.insert(data.begin() + i, insertion[i - s_border]);
+    }
+}
+vector<bool> A_B_summary(Word& term)
+{
+    vector<bool> term_one, term_two, result;
+    int A_first = 3, A_second = 7, B_first = 7, B_second = 11;
+    bool mind = false;
+    for (int i = A_first; i < A_second; i++)
+    {
+        term_one.push_back(term.data[i]);
+    }
+    for (int i = B_first; i < B_second; i++)
+    {
+        term_two.push_back(term.data[i]);
+    }
+    for (int i = term_one.size() - 1; i >= 0; i--)
+    {
+        if (term_one[i] && term_two[i] && mind) {
+            result.insert(result.begin(), true);
+        }
+        else if (term_one[i] && term_two[i] && !mind) {
+            result.insert(result.begin(), false);
+            mind = true;
+        }
+        else if (((!term_one[i] && term_two[i]) || (term_one[i] && !term_two[i])) && mind) {
+            result.insert(result.begin(), false);
+        }
+        else if (((!term_one[i] && term_two[i]) || (term_one[i] && !term_two[i])) && !mind) {
+            result.insert(result.begin(), true);
+        }
+        else if (!term_one[i] && !term_two[i] && !mind) {
+            result.insert(result.begin(), false);
+        }
+        else if (!term_one[i] && !term_two[i] && mind) {
+            result.insert(result.begin(), true);
+            mind = false;
+        }
+    }
+    result.insert(result.begin(), mind);
+    return result;
+}
 
-};
 AsociatedMemory::AsociatedMemory()
 {
     table.resize(amount_of_words_and_symbols);
@@ -254,7 +287,7 @@ void AsociatedMemory::near_above(vector<bool> term)
 }
 void AsociatedMemory::near_below(vector<bool> term)
 {
-    vector<bool>near_current_vector(term.size(), true);
+    vector<bool>near_current_vector(term.size(), false);
     Word example(term), near_current(near_current_vector);
     bool overlap = false;
     for (int i = 0; i < table.size(); i++)
@@ -271,8 +304,268 @@ void AsociatedMemory::near_below(vector<bool> term)
         cout << "Nearest word below found : " << near_current.print() << endl;
     }
 }
-
-int main()
+void AsociatedMemory::fields_summary(vector<bool>& V)
 {
-    return 0;
+    for (int i = 0; i < table.size(); i++)
+    {
+        if (table[i].GetV() == V) {
+            table[i].SetS();
+        }
+    }
 }
+
+void my_own_task()
+{
+    AsociatedMemory memory;
+    bool flag = true;
+    string word;
+    int choice, position_one, position_two;
+    vector<bool> example, v1{ 1,1,1 }, v2{ 0,0,0 }, test{ 0,1,0,1,1,1,1,0,1,1,1,0,1,1,0,1,1 };
+    while (flag)
+    {
+        cout << "Enter 1)Push :: 2)Print :: 3)Print diagonalized :: 4)F1, F3, F12, F14 :: 5)Near_above :: 6)Near_below :: 7)fields summary :: 8)All :: 9)Finish : ";
+        cin >> choice;
+        switch (choice)
+        {
+        case 1: cout << "Enter position for insertion : ";
+            cin >> position_one;
+            cout << "Enter line with " << amount_of_words_and_symbols << " elements : ";
+            cin >> word;
+            if (!fromStringToVector(word, example))
+            {
+                cout << "Enter something possible to work with!" << endl;
+                return;
+            }
+            memory.push(position_one, example);
+            example.clear();
+           break;
+        case 2:
+            memory.print();
+            break;
+        case 3:
+            memory.print_diagonalized();
+            break;
+        case 4:
+            cout << "Enter positions for insertion : ";
+            cin >> position_one;
+            cin.ignore();
+            cin >> position_two;
+            memory.F1(position_one, position_two);
+            memory.F3(position_one, position_two);
+            memory.F12(position_one, position_two);
+            memory.F14(position_one, position_two);
+            break;
+        case 5:
+            cout << "Enter line with " << amount_of_words_and_symbols << " elements : ";
+            cin >> word;
+            if (!fromStringToVector(word, example))
+            {
+                cout << "Enter something possible to work with!" << endl;
+                return;
+            }
+            memory.near_above(example);
+            example.clear();
+            break;
+        case 6:
+            cout << "Enter line with " << amount_of_words_and_symbols << " elements : ";
+            cin >> word;
+            if (!fromStringToVector(word, example))
+            {
+                cout << "Enter something possible to work with!" << endl;
+                return;
+            }
+            memory.near_below(example);
+            example.clear();
+            break;
+        case 7: cout << "For V = 111 and 000 done!" << endl;
+            memory.fields_summary(v1);
+            memory.fields_summary(v2);
+            break;
+        case 8:
+            cout << "For positions 4 and 12 and search above/bolow for 01011110111011011: " << endl;
+            position_one = 4;
+            position_two = 12;
+            memory.print();
+            memory.print_diagonalized();
+            memory.F1(position_one, position_two);
+            memory.F3(position_one, position_two);
+            memory.F12(position_one, position_two);
+            memory.F14(position_one, position_two);
+            memory.near_above(test);
+            memory.near_below(test);
+            memory.fields_summary(v1);
+            memory.fields_summary(v2);
+            break;
+        case 9: flag = false;
+            break;;
+        default:
+            cout << endl << "Enter something possible to work with!" << endl;
+            return;
+        }
+    }
+    
+}
+bool Test1()
+{
+    vector<bool> A{ 0,0,0,0 }, S{ 0,0,0,1 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (compare_result.first && !compare_result.second) {
+        cout << "Test1 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test1 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test2()
+{
+    vector<bool> A{ 0,1,1,1 }, S{ 0,0,0,1 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (!compare_result.first && compare_result.second) {
+        cout << "Test2 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test2 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test3()
+{
+    vector<bool> A{ 0,0,0,1 }, S{ 0,0,0,1 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (!compare_result.first && !compare_result.second) {
+        cout << "Test3 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test3 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test4()
+{
+    vector<bool> A{ 1,1,1,1 }, S{ 0,1,1,1 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (!compare_result.first && compare_result.second) {
+        cout << "Test4 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test4 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test5()
+{
+    vector<bool> A{ 1,1,1,1 }, S{ 1,1,1,1 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (!compare_result.first && !compare_result.second) {
+        cout << "Test5 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test5 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test6()
+{
+    vector<bool> A{ 0,1,0,0,0,0 }, S{ 0,0,1,1,1,0 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (!compare_result.first && compare_result.second) {
+        cout << "Test6 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test6 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test7()
+{
+    vector<bool> A{ 1,1,0,0,0,0 }, S{ 1,1,0,0,0,0 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (!compare_result.first && !compare_result.second) {
+        cout << "Test7 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test7 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test8()
+{
+    vector<bool> A{ 0,1,1,1,1,1,1,1,1,1 }, S{ 1,0,0,0,0,0,0,0,0,0 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (compare_result.first && !compare_result.second) {
+        cout << "Test8 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test8 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test9()
+{
+    vector<bool> A{ 0,1,1,1,1,1,1,1,1,1 }, S{ 0,1,1,1,1,1,1,1,1,1 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (!compare_result.first && !compare_result.second) {
+        cout << "Test9 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test9 incorrect!" << endl;
+        return false;
+    }
+}
+bool Test10()
+{
+    vector<bool> A{ 0,1,1,1,1,0,1,1,1,1 }, S{ 0,1,1,1,1,1,1,1,1,1 };
+    pair<bool, bool> compare_result = recursion_compare(A, S, A.size() - 1);
+    if (compare_result.first && !compare_result.second) {
+        cout << "Test10 correct!" << endl;
+        return true;
+    }
+    else {
+        cout << "Test10 incorrect!" << endl;
+        return false;
+    }
+}
+void tests()
+{
+    int correct_counter = 0;
+    correct_counter += Test1();
+    correct_counter += Test2();
+    correct_counter += Test3();
+    correct_counter += Test4();
+    correct_counter += Test5();
+    correct_counter += Test6();
+    correct_counter += Test7();
+    correct_counter += Test8();
+    correct_counter += Test9();
+    correct_counter += Test10();
+    if (correct_counter == 10) {
+        cout << "All tests passed correctly!" << endl;
+    }
+}
+void our_own_input()
+{
+    int choice;
+    cout << "1)Tests :: 2)Task  : ";
+    cin >> choice;
+    switch (choice)
+    {
+    case 1: tests();
+        break;
+    case 2: my_own_task();
+        break;
+    default: 
+        cout << "Enter something possible to work with!" << endl;
+        return;
+    }
+}
+
